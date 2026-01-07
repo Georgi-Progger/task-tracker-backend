@@ -1,17 +1,16 @@
 package datasource
 
 import (
-	"log/slog"
 	"os"
 
-	"github.com/Georgi-Progger/task-tracker-backend/internal/config"
+	"github.com/Georgi-Progger/task-tracker-backend/pkg/logger"
 	"github.com/jmoiron/sqlx"
 )
 
-func NewDb(cfg config.Config) (*sqlx.DB, error) {
-	db, err := sqlx.Connect("postgres", cfg.GetUrlDb())
+func NewDb(dsn string, logger logger.Logger) (*sqlx.DB, error) {
+	db, err := sqlx.Connect("postgres", dsn)
 	if err != nil {
-		slog.Error("Failed to connect to database", "error", err)
+		logger.Error(err, "Failed to connect to database")
 		os.Exit(1)
 	}
 
@@ -19,7 +18,7 @@ func NewDb(cfg config.Config) (*sqlx.DB, error) {
 	db.SetMaxIdleConns(5)
 
 	if err := db.Ping(); err != nil {
-		slog.Error("Failed to ping database", "error", err)
+		logger.Error(err, "Failed to ping database")
 		os.Exit(1)
 	}
 

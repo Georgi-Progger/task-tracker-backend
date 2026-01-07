@@ -1,17 +1,10 @@
-package domain
+package entity
 
 import (
 	"time"
 
 	"github.com/google/uuid"
 )
-
-type Task struct {
-	Id     uuid.UUID
-	UserId string
-	Title  string
-	Text   string
-}
 
 type RefreshToken struct {
 	ID        uuid.UUID
@@ -22,20 +15,13 @@ type RefreshToken struct {
 	Revoked   bool
 }
 
-type User struct {
-	Id       uuid.UUID `json:"id"`
-	Name     string    `json:"user_name,omitempty"`
-	Email    string    `json:"email"`
-	Password string    `json:"password,omitempty"`
-}
-
-type Response struct {
+type ResponseToken struct {
 	AccessToken  string `json:"access_token"`
 	RefreshToken string `json:"refresh_token,omitempty"`
 }
 
-type ErrorResponse struct {
-	Message string
+type Response struct {
+	Message string `json:"message"`
 }
 
 type RefreshRequest struct {

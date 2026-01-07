@@ -15,7 +15,7 @@ func (h *Handler) GetUser(c echo.Context) error {
 
 	user, err := h.service.GetUserById(c.Request().Context(), userID.String())
 	if err != nil {
-		c.Logger().Error(err)
+		h.logger.Error(err, "Error get user")
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 	return c.JSON(http.StatusCreated, user)

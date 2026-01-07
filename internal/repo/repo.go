@@ -4,26 +4,27 @@ import (
 	"context"
 	"time"
 
-	"github.com/Georgi-Progger/task-tracker-backend/internal/domain"
+	"github.com/Georgi-Progger/task-tracker-backend/internal/domain/entity"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 )
 
 type UserReposetory interface {
-	GetUserById(ctx context.Context, userId string) (domain.User, error)
+	GetUserById(ctx context.Context, userId string) (entity.User, error)
 	CreateUser(ctx context.Context, name, email, hashPassword string) error
-	GetUserByEmail(ctx context.Context, email string) (domain.User, error)
+	GetUserByEmail(ctx context.Context, email string) (entity.User, error)
 }
 
 type TaskRepository interface {
-	GetUserTasks(ctx context.Context, userId string) ([]domain.Task, error)
-	CreateTask(ctx context.Context, task domain.Task) (domain.Task, error)
-	UpdateTask(ctx context.Context, task domain.Task) (domain.Task, error)
+	GetUserTasks(ctx context.Context, userId uuid.UUID, limit, offset int) ([]entity.Task, error)
+	CreateTask(ctx context.Context, title, text string, status entity.Status, userId uuid.UUID) (string, error)
+	UpdateTask(ctx context.Context, task entity.Task) error
+	DeleteTask(ctx context.Context, taskId, userId uuid.UUID) error
 }
 
 type RefreshTokenRepository interface {
-	CreateRefreshToken(ctx context.Context, userID uuid.UUID, ttl time.Duration) (domain.RefreshToken, error)
-	GetRefreshToken(ctx context.Context, tokenString string) (domain.RefreshToken, error)
+	CreateRefreshToken(ctx context.Context, userID uuid.UUID, ttl time.Duration) (entity.RefreshToken, error)
+	GetRefreshToken(ctx context.Context, tokenString string) (entity.RefreshToken, error)
 	RevokeRefreshToken(ctx context.Context, tokenString string) error
 }
 

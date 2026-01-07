@@ -115,7 +115,8 @@
     ```
     {
         title: string,
-        text: string
+        text: string,
+        status: ("IN_PROGRESS, COMPLETE, CREATE)
     }
     ```
     response
@@ -126,19 +127,20 @@
     ```
 
 
-### PATCH /tasks/{task_id} - обновление таски
+### PUT /tasks/{task_id} - обновление таски
 
 - request 
     ```
     {
         title: string, 
-        text: string
+        text: string,
+        status: string 
     }
     ```
     response
     ```
     {
-        message: "task is updated"
+        message: "task is update"
     }
     ```
 
@@ -151,7 +153,7 @@
     }
     ```
 
-### GET /tasks - получение тасок 
+### GET /tasks?limit=int&offset=int - получение тасок 
 
 - response
     ```

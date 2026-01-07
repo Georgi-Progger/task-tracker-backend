@@ -8,31 +8,32 @@ import (
 	"time"
 
 	"github.com/Georgi-Progger/task-tracker-backend/internal/domain"
+	"github.com/Georgi-Progger/task-tracker-backend/internal/domain/entity"
 	"github.com/Georgi-Progger/task-tracker-backend/internal/repo"
 	"github.com/Georgi-Progger/task-tracker-backend/pkg/hash"
-	logger "github.com/Georgi-Progger/task-tracker-backend/pkg/looger"
 	"github.com/golang-jwt/jwt/v5"
 )
 
 type authService struct {
 	userRepo         repo.UserReposetory
 	refreshTokenRepo repo.RefreshTokenRepository
-	log              logger.Logger
+	emailService     emailService
 	jwtSecret        []byte
 	accessTokenTTL   time.Duration
 }
 
-func NewAuthService(userRepo repo.UserReposetory, refreshTokenRepo repo.RefreshTokenRepository, jwtSecret string, accessTokenTTL time.Duration, log logger.Logger) *authService {
+func NewAuthService(userRepo repo.UserReposetory, refreshTokenRepo repo.RefreshTokenRepository,
+	emailService emailService, jwtSecret string, accessTokenTTL time.Duration) *authService {
 	return &authService{
 		userRepo:         userRepo,
 		refreshTokenRepo: refreshTokenRepo,
-		log:              log,
+		emailService:     emailService,
 		jwtSecret:        []byte(jwtSecret),
 		accessTokenTTL:   accessTokenTTL,
 	}
 }
 
-func (a *authService) Register(ctx context.Context, user domain.User) (string, error) {
+func (a *authService) Register(ctx context.Context, user entity.User) (string, error) {
 	_, err := a.userRepo.GetUserByEmail(ctx, user.Email)
 	if err == nil {
 		return "", domain.ErrEmailInUse
@@ -52,6 +53,17 @@ func (a *authService) Register(ctx context.Context, user domain.User) (string, e
 		return "", fmt.Errorf("error create user")
 	}
 
+	email := entity.Email{
+		Recipient: user.Email,
+		Subject:   fmt.Sprintf("Приветствуем, %s, в taskcounter", user.Name),
+		Body:      "Вы прошли успешную регистрацию в taskcounter!!",
+	}
+
+	err = a.emailService.SendMessage(ctx, email)
+	if err != nil {
+		return "", err
+	}
+
 	accessToken, err := a.generateAccessToken(user)
 	if err != nil {
 		return "", fmt.Errorf("error generate token")
@@ -60,7 +72,7 @@ func (a *authService) Register(ctx context.Context, user domain.User) (string, e
 	return accessToken, nil
 }
 
-func (a *authService) Login(ctx context.Context, userDomain domain.User, refreshTokenTTL time.Duration) (string, string, error) {
+func (a *authService) Login(ctx context.Context, userDomain entity.User, refreshTokenTTL time.Duration) (string, string, error) {
 	user, err := a.userRepo.GetUserByEmail(ctx, userDomain.Email)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -114,7 +126,7 @@ func (a *authService) RefreshAccessToken(ctx context.Context, refreshTokenString
 	return accessToken, nil
 }
 
-func (a *authService) generateAccessToken(user domain.User) (string, error) {
+func (a *authService) generateAccessToken(user entity.User) (string, error) {
 	expirationTime := time.Now().Add(a.accessTokenTTL)
 
 	claims := jwt.MapClaims{

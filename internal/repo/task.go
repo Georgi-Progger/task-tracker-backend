@@ -2,8 +2,10 @@ package repo
 
 import (
 	"context"
+	"time"
 
-	"github.com/Georgi-Progger/task-tracker-backend/internal/domain"
+	"github.com/Georgi-Progger/task-tracker-backend/internal/domain/entity"
+	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -17,18 +19,63 @@ func NewTaskRepository(db *sqlx.DB) *taskRepository {
 	}
 }
 
-func (t *taskRepository) GetUserTasks(ctx context.Context, userId string) ([]domain.Task, error) {
-	// query := `
-	// `
+func (t *taskRepository) GetUserTasks(ctx context.Context, userId uuid.UUID, limit, offset int) ([]entity.Task, error) {
+	query := `
+		SELECT id, title, text, task_status FROM tasks
+		WHERE user_id = $1
+		ORDER BY created_at DESC
+		LIMIT $2 OFFSET $3;
+	`
 
-	return nil, nil
-}
-func (t *taskRepository) CreateTask(ctx context.Context, task domain.Task) (domain.Task, error) {
-	// query := `
+	var tasks []entity.Task
+	rows, err := t.db.QueryContext(ctx, query, userId, limit, offset)
+	if err != nil {
+		return nil, err
+	}
 
-	// `
-	return domain.Task{}, nil
+	for rows.Next() {
+		var task entity.Task
+		err := rows.Scan(&task.Id, &task.Title, &task.Text, &task.Status)
+		if err != nil {
+			return nil, err
+		}
+
+		tasks = append(tasks, task)
+	}
+
+	return tasks, nil
 }
-func (t *taskRepository) UpdateTask(ctx context.Context, task domain.Task) (domain.Task, error) {
-	return domain.Task{}, nil
+func (t *taskRepository) CreateTask(ctx context.Context, title, text string, status entity.Status, userId uuid.UUID) (string, error) {
+	query := `
+		INSERT INTO tasks (id, title, text, user_id, created_at, task_status) VALUES ($1, $2, $3, $4, $5, $6);
+	`
+
+	taskId := uuid.New()
+	_, err := t.db.ExecContext(ctx, query, taskId, title, text, userId, time.Now(), status)
+	if err != nil {
+		return "", err
+	}
+
+	return taskId.String(), nil
+}
+
+func (t *taskRepository) UpdateTask(ctx context.Context, task entity.Task) error {
+	query := `
+		UPDATE tasks  
+		SET text = $1, title = $2, task_status = $3
+		WHERE user_id = $4 AND id = $5;
+	`
+
+	_, err := t.db.ExecContext(ctx, query, task.Text, task.Title, task.Status, task.UserId, task.Id)
+	return err
+}
+
+func (t *taskRepository) DeleteTask(ctx context.Context, taskId, userId uuid.UUID) error {
+	query := `
+		DELETE FROM tasks 
+		WHERE id = $1 AND user_id = $2;
+	`
+
+	_, err := t.db.ExecContext(ctx, query, taskId, userId)
+	return err
 }

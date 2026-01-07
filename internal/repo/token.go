@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/Georgi-Progger/task-tracker-backend/internal/domain"
+	"github.com/Georgi-Progger/task-tracker-backend/internal/domain/entity"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 )
@@ -17,11 +17,11 @@ func NewRefreshTokenRepository(db *sqlx.DB) *refreshTokenRepository {
 	return &refreshTokenRepository{db: db}
 }
 
-func (r *refreshTokenRepository) CreateRefreshToken(ctx context.Context, userID uuid.UUID, ttl time.Duration) (domain.RefreshToken, error) {
+func (r *refreshTokenRepository) CreateRefreshToken(ctx context.Context, userID uuid.UUID, ttl time.Duration) (entity.RefreshToken, error) {
 	tokenID := uuid.New()
 	expiresAt := time.Now().Add(ttl)
 
-	token := domain.RefreshToken{
+	token := entity.RefreshToken{
 		ID:        tokenID,
 		UserID:    userID,
 		Token:     tokenID.String(),
@@ -35,18 +35,18 @@ func (r *refreshTokenRepository) CreateRefreshToken(ctx context.Context, userID 
     `
 	_, err := r.db.ExecContext(ctx, query, &token.ID, &token.UserID, &token.Token, &token.ExpiresAt, &token.CreatedAt, &token.Revoked)
 	if err != nil {
-		return domain.RefreshToken{}, err
+		return entity.RefreshToken{}, err
 	}
 	return token, nil
 }
 
-func (r *refreshTokenRepository) GetRefreshToken(ctx context.Context, tokenString string) (domain.RefreshToken, error) {
+func (r *refreshTokenRepository) GetRefreshToken(ctx context.Context, tokenString string) (entity.RefreshToken, error) {
 	query := `
         SELECT id, user_id, token, expires_at, created_at, revoked
         FROM refresh_tokens
         WHERE token = $1
     `
-	var token domain.RefreshToken
+	var token entity.RefreshToken
 	err := r.db.QueryRowContext(ctx, query, tokenString).Scan(
 		&token.ID,
 		&token.UserID,
@@ -56,7 +56,7 @@ func (r *refreshTokenRepository) GetRefreshToken(ctx context.Context, tokenStrin
 		&token.Revoked,
 	)
 	if err != nil {
-		return domain.RefreshToken{}, err
+		return entity.RefreshToken{}, err
 	}
 	return token, nil
 }

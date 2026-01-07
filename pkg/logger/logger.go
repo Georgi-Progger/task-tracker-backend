@@ -29,7 +29,7 @@ func (l *Logger) Info(msg string) {
 }
 
 func (l *Logger) Error(err error, msg string) {
-	l.Logger.Err(err).Msg(err.Error())
+	l.Logger.Err(err).Msg(msg)
 }
 
 func (l *Logger) Debug(msg string) {

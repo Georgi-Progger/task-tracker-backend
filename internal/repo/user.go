@@ -2,9 +2,8 @@ package repo
 
 import (
 	"context"
-	"fmt"
 
-	"github.com/Georgi-Progger/task-tracker-backend/internal/domain"
+	"github.com/Georgi-Progger/task-tracker-backend/internal/domain/entity"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 )
@@ -26,43 +25,42 @@ func (u *userRepository) CreateUser(ctx context.Context, name, email, hashPasswo
 
 	_, err := u.db.ExecContext(ctx, query, uuid.New(), name, email, hashPassword)
 	if err != nil {
-		fmt.Printf("%v", err)
 		return err
 	}
 
 	return nil
 }
 
-func (u *userRepository) GetUserById(ctx context.Context, userId string) (domain.User, error) {
+func (u *userRepository) GetUserById(ctx context.Context, userId string) (entity.User, error) {
 	query := `
 			SELECT id, email FROM users WHERE id = $1;
 	`
 
-	var user domain.User
+	var user entity.User
 	err := u.db.QueryRowContext(ctx, query, userId).Scan(
 		&user.Id,
 		&user.Email,
 	)
 	if err != nil {
-		return domain.User{}, err
+		return entity.User{}, err
 	}
 
 	return user, nil
 }
 
-func (u *userRepository) GetUserByEmail(ctx context.Context, email string) (domain.User, error) {
+func (u *userRepository) GetUserByEmail(ctx context.Context, email string) (entity.User, error) {
 	query := `
 			SELECT id, email, password FROM users WHERE email = $1;
 	`
 
-	var user domain.User
+	var user entity.User
 	err := u.db.QueryRowContext(ctx, query, email).Scan(
 		&user.Id,
 		&user.Email,
 		&user.Password,
 	)
 	if err != nil {
-		return domain.User{}, err
+		return entity.User{}, err
 	}
 
 	return user, nil

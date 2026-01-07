@@ -2,7 +2,6 @@ package config
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/Georgi-Progger/task-tracker-backend/internal/config/env"
 	"github.com/joho/godotenv"
@@ -10,11 +9,8 @@ import (
 
 type Config struct {
 	DbConfig
-	server
-}
-
-type server struct {
-	Port string
+	AppConfig
+	BrokerConfig
 }
 
 func LoadConfig() (Config, error) {
@@ -27,13 +23,20 @@ func LoadConfig() (Config, error) {
 		return Config{}, fmt.Errorf("error create config: %w", err)
 	}
 
-	appPort := os.Getenv("APP_PORT")
+	app, err := env.NewAppConfig()
+	if err != nil {
+		return Config{}, fmt.Errorf("error create config: %w", err)
+	}
+
+	broker, err := env.NewBrokerConfig()
+	if err != nil {
+		return Config{}, fmt.Errorf("error create config: %w", err)
+	}
 
 	cfg := Config{
-		db,
-		server{
-			Port: appPort,
-		},
+		DbConfig:     db,
+		AppConfig:    app,
+		BrokerConfig: broker,
 	}
 	return cfg, nil
 }
