@@ -2,8 +2,6 @@ package consumer
 
 import (
 	"context"
-	"fmt"
-	"log"
 
 	"github.com/Georgi-Progger/task-tracker-backend/pkg/logger"
 	"github.com/segmentio/kafka-go"
@@ -14,7 +12,7 @@ type consumer struct {
 	logger logger.Logger
 }
 
-func NewProducer(dsn, topic string, logger logger.Logger) consumer {
+func NewConsumer(dsn, topic string, logger logger.Logger) consumer {
 	reader := kafka.NewReader(kafka.ReaderConfig{
 		Brokers: []string{dsn},
 		Topic:   topic,
@@ -27,13 +25,14 @@ func NewProducer(dsn, topic string, logger logger.Logger) consumer {
 	}
 }
 
-func (c *consumer) Read() {
+func (c *consumer) Read() []byte {
 	defer c.reader.Close()
 
 	msg, err := c.reader.ReadMessage(context.Background())
 	if err != nil {
-		log.Fatal("Ошибка при получении:", err)
+		c.logger.Error(err, "Ошибка при получении")
+		return nil
 	}
 
-	fmt.Println(string(msg.Value))
+	return msg.Value
 }
