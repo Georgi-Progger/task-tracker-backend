@@ -6,10 +6,10 @@ docker build -t task-tracker-back:v1 .
 cd ..
 
 # # Сборка почтового сервиса
-# echo "Building email service"
-# cd task-tracker-email-sender
-# docker build -t task-tracker-email:v1 .
-# cd ..
+echo "Building email service"
+cd task-tracker-email-sender
+docker build -t task-tracker-email-sender:v1 .
+cd ..
 
 # # Сборка сервиса планировщика 
 # echo "Building sheduler service"

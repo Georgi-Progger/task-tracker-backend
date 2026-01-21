@@ -25,14 +25,11 @@ func NewConsumer(dsn, topic string, logger logger.Logger) consumer {
 	}
 }
 
-func (c *consumer) Read() []byte {
-	defer c.reader.Close()
-
-	msg, err := c.reader.ReadMessage(context.Background())
+func (c *consumer) Read(ctx context.Context) ([]byte, error) {
+	msg, err := c.reader.ReadMessage(ctx)
 	if err != nil {
 		c.logger.Error(err, "Ошибка при получении")
-		return nil
+		return nil, err
 	}
-
-	return msg.Value
+	return msg.Value, nil
 }
