@@ -11,6 +11,7 @@ type Config struct {
 	DbConfig
 	AppConfig
 	BrokerConfig
+	RedisConfig
 }
 
 func LoadConfig() (Config, error) {
@@ -33,10 +34,16 @@ func LoadConfig() (Config, error) {
 		return Config{}, fmt.Errorf("error create config: %w", err)
 	}
 
+	redis, err := env.NewRedisConfig()
+	if err != nil {
+		return Config{}, fmt.Errorf("error create config: %w", err)
+	}
+
 	cfg := Config{
 		DbConfig:     db,
 		AppConfig:    app,
 		BrokerConfig: broker,
+		RedisConfig:  redis,
 	}
 	return cfg, nil
 }

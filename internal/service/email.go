@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	"github.com/Georgi-Progger/task-tracker-backend/internal/domain/entity"
-	"github.com/Georgi-Progger/task-tracker-backend/pkg/kafka"
+	"github.com/Georgi-Progger/task-tracker-common/kafka"
 )
 
 type emailService struct {

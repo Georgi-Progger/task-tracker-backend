@@ -6,7 +6,7 @@ import (
 
 	"github.com/Georgi-Progger/task-tracker-backend/internal/domain/entity"
 	"github.com/Georgi-Progger/task-tracker-backend/internal/repo"
-	"github.com/Georgi-Progger/task-tracker-backend/pkg/kafka"
+	"github.com/Georgi-Progger/task-tracker-common/kafka"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 )

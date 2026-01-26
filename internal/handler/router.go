@@ -1,9 +1,14 @@
 package handler
 
-import "github.com/labstack/echo/v4"
+import (
+	"time"
+
+	"github.com/labstack/echo/v4"
+)
 
 func (h *Handler) SetupRoutes(e *echo.Echo) {
 	api := e.Group("/api")
+	api.Use(h.RateLimitMiddleware(100, time.Minute))
 	{
 		auth := api.Group("/users")
 		protectedUser := api.Group("/users")
@@ -14,11 +19,13 @@ func (h *Handler) SetupRoutes(e *echo.Echo) {
 		}
 
 		protectedUser.Use(h.AuthMiddleware())
+		protectedUser.Use(h.RateLimitMiddleware(10, time.Minute))
 		{
 			protectedUser.GET("/user", h.GetUser)
 		}
 
 		protectedTask.Use(h.AuthMiddleware())
+		protectedTask.Use(h.RateLimitMiddleware(10, time.Minute))
 		{
 			protectedTask.POST("", h.CreateTask)
 			protectedTask.GET("", h.GetUserTasks)

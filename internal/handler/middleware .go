@@ -1,8 +1,10 @@
 package handler
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
@@ -46,6 +48,31 @@ func (h *Handler) AuthMiddleware() echo.MiddlewareFunc {
 
 			c.Set("user_id", userID)
 
+			return next(c)
+		}
+	}
+}
+
+func (h *Handler) RateLimitMiddleware(limit int, window time.Duration) echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			userIp := c.RealIP()
+			path := c.Request().URL
+			key := fmt.Sprintf("rate_limit:%s:%s", userIp, path)
+
+			allowed, err := h.limiter.Allow(c.Request().Context(), limit, window, key)
+			if err != nil {
+				h.logger.Error(err, "error get allow status")
+				return echo.NewHTTPError(http.StatusInternalServerError, "Internal server error")
+			}
+
+			if !allowed {
+				c.Response().Header().Set("X-RateLimit-Limit", fmt.Sprintf("%d", limit))
+				c.Response().Header().Set("X-RateLimit-Remaining", "0")
+				c.Response().Header().Set("X-RateLimit-Reset", fmt.Sprintf("%d", time.Now().Add(window).Unix()))
+
+				return echo.NewHTTPError(http.StatusTooManyRequests, "Too many requests")
+			}
 			return next(c)
 		}
 	}

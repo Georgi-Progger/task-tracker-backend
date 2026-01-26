@@ -14,9 +14,11 @@ import (
 	"github.com/Georgi-Progger/task-tracker-backend/internal/handler"
 	"github.com/Georgi-Progger/task-tracker-backend/internal/repo"
 	"github.com/Georgi-Progger/task-tracker-backend/internal/service"
-	"github.com/Georgi-Progger/task-tracker-backend/pkg/datasource"
-	"github.com/Georgi-Progger/task-tracker-backend/pkg/kafka/producer"
-	"github.com/Georgi-Progger/task-tracker-backend/pkg/logger"
+	"github.com/Georgi-Progger/task-tracker-common/kafka/producer"
+	"github.com/Georgi-Progger/task-tracker-common/logger"
+	"github.com/Georgi-Progger/task-tracker-common/postgres"
+	"github.com/Georgi-Progger/task-tracker-common/redis"
+	"github.com/Georgi-Progger/task-tracker-rate-limiter/limiter"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -43,7 +45,7 @@ func Run() {
 		os.Exit(1)
 	}
 
-	db, err := datasource.NewDb(cfg.GetUrlDb(), logger)
+	db, err := postgres.NewDb(cfg.GetUrlDb(), logger)
 	if err != nil {
 		slog.Error("db connect failed")
 	}
@@ -53,13 +55,20 @@ func Run() {
 		}
 	}()
 
+	redisClient, err := redis.NewRedisClient(context.Background(), cfg.GetUrlRedis(), logger)
+	if err != nil {
+		slog.Error("redis connect failed")
+	}
+
+	rateLimiter := limiter.NewLimiter(redisClient)
+
 	jwtSecret := os.Getenv("JWT_SECRET")
 
 	producer := producer.NewProducer(cfg.GetUrlBroker(), "EMAIL_SENDING_TASKS", logger) // TODO: FIX THIS SHIT
 
 	repo := repo.NewRepository(db)
 	service := service.NewService(repo, jwtSecret, &producer, 15*time.Minute)
-	handler := handler.NewHandler(service, logger)
+	handler := handler.NewHandler(service, *rateLimiter, logger)
 	handler.SetupRoutes(e)
 
 	server := &http.Server{
