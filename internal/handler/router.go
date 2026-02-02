@@ -8,7 +8,6 @@ import (
 
 func (h *Handler) SetupRoutes(e *echo.Echo) {
 	api := e.Group("/api")
-	api.Use(h.RateLimitMiddleware(100, time.Minute))
 	{
 		auth := api.Group("/users")
 		protectedUser := api.Group("/users")

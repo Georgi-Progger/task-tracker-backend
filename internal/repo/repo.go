@@ -5,6 +5,8 @@ import (
 	"time"
 
 	"github.com/Georgi-Progger/task-tracker-backend/internal/domain/entity"
+	"github.com/Georgi-Progger/task-tracker-backend/internal/domain/model"
+
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 )
@@ -20,6 +22,7 @@ type TaskRepository interface {
 	CreateTask(ctx context.Context, title, text string, status entity.Status, userId uuid.UUID) (string, error)
 	UpdateTask(ctx context.Context, task entity.Task) error
 	DeleteTask(ctx context.Context, taskId, userId uuid.UUID) error
+	CountUsersTasks(ctx context.Context) ([]model.TaskCounter, error)
 }
 
 type RefreshTokenRepository interface {

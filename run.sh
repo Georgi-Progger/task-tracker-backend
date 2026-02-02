@@ -12,9 +12,10 @@ docker build -t task-tracker-email-sender:v1 .
 cd ..
 
 # # Сборка сервиса планировщика 
-# echo "Building sheduler service"
-# docker build -t task-tracker-sheduler:v1 .
-# cd ..
+echo "Building scheduler service"
+cd task-tracker-scheduler
+docker build -t task-tracker-scheduler:v1 .
+cd ..
 
 # Перезапуск docker compose
 echo "Restarting docker compose..."

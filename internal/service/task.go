@@ -6,6 +6,7 @@ import (
 
 	"github.com/Georgi-Progger/task-tracker-backend/internal/domain/entity"
 	"github.com/Georgi-Progger/task-tracker-backend/internal/repo"
+
 	"github.com/google/uuid"
 )
 

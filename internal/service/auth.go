@@ -9,8 +9,10 @@ import (
 
 	"github.com/Georgi-Progger/task-tracker-backend/internal/domain"
 	"github.com/Georgi-Progger/task-tracker-backend/internal/domain/entity"
+	"github.com/Georgi-Progger/task-tracker-backend/internal/domain/model"
 	"github.com/Georgi-Progger/task-tracker-backend/internal/repo"
 	"github.com/Georgi-Progger/task-tracker-backend/pkg/hash"
+
 	"github.com/golang-jwt/jwt/v5"
 )
 
@@ -53,13 +55,13 @@ func (a *authService) Register(ctx context.Context, user entity.User) (string, e
 		return "", fmt.Errorf("error create user")
 	}
 
-	email := entity.Email{
+	email := model.Email{
 		Recipient: user.Email,
 		Subject:   fmt.Sprintf("Приветствуем, %s, в taskcounter", user.Name),
 		Body:      "Вы прошли успешную регистрацию в taskcounter!!",
 	}
 
-	err = a.emailService.SendMessage(ctx, email)
+	err = a.emailService.SendWelcomeMessage(ctx, email)
 	if err != nil {
 		return "", err
 	}

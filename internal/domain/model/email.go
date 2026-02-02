@@ -1,4 +1,4 @@
-package entity
+package model
 
 type Email struct {
 	Recipient string `json:"recipient"`

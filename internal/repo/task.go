@@ -5,6 +5,8 @@ import (
 	"time"
 
 	"github.com/Georgi-Progger/task-tracker-backend/internal/domain/entity"
+	"github.com/Georgi-Progger/task-tracker-backend/internal/domain/model"
+
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 )
@@ -78,4 +80,35 @@ func (t *taskRepository) DeleteTask(ctx context.Context, taskId, userId uuid.UUI
 
 	_, err := t.db.ExecContext(ctx, query, taskId, userId)
 	return err
+}
+
+func (t *taskRepository) CountUsersTasks(ctx context.Context) ([]model.TaskCounter, error) {
+	query := `
+		SELECT
+			u.email,
+			COUNT(CASE WHEN t.task_status = 'COMPLETE' THEN 1 END) as completed_count,
+			COUNT(CASE WHEN t.task_status IN ('CREATE', 'IN_PROGRESS') THEN 1 END) as pending_count
+		FROM users u
+		LEFT JOIN tasks t ON u.id = t.user_id
+		GROUP BY u.id, u.email
+		ORDER BY u.email;
+	`
+
+	var tasksCounters []model.TaskCounter
+	rows, err := t.db.QueryContext(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+
+	for rows.Next() {
+		var taskCounter model.TaskCounter
+		err := rows.Scan(&taskCounter.Email, &taskCounter.CompleteTaskCount, &taskCounter.PendingTaskCount)
+		if err != nil {
+			return nil, err
+		}
+
+		tasksCounters = append(tasksCounters, taskCounter)
+	}
+
+	return tasksCounters, nil
 }

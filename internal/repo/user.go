@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/Georgi-Progger/task-tracker-backend/internal/domain/entity"
+
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 )

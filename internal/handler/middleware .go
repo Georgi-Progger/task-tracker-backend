@@ -56,9 +56,8 @@ func (h *Handler) AuthMiddleware() echo.MiddlewareFunc {
 func (h *Handler) RateLimitMiddleware(limit int, window time.Duration) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			userIp := c.RealIP()
 			path := c.Request().URL
-			key := fmt.Sprintf("rate_limit:%s:%s", userIp, path)
+			key := fmt.Sprintf("rate_limit:%s:%s", c.RealIP(), path)
 
 			allowed, err := h.limiter.Allow(c.Request().Context(), limit, window, key)
 			if err != nil {
@@ -76,9 +75,4 @@ func (h *Handler) RateLimitMiddleware(limit int, window time.Duration) echo.Midd
 			return next(c)
 		}
 	}
-}
-
-func GetUserID(c echo.Context) (uuid.UUID, bool) {
-	userID, ok := c.Get("user_id").(uuid.UUID)
-	return userID, ok
 }

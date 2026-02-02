@@ -7,6 +7,7 @@ import (
 	"github.com/Georgi-Progger/task-tracker-backend/internal/domain/entity"
 	"github.com/Georgi-Progger/task-tracker-backend/internal/repo"
 	"github.com/Georgi-Progger/task-tracker-common/kafka"
+
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 )
@@ -29,19 +30,22 @@ type TaskService interface {
 	DeleteTask(ctx context.Context, taskId, userId uuid.UUID) error
 }
 
-type EmailService struct {
+type EmailService interface {
+	SendTaskCountMessage(ctx context.Context) error
 }
 
 type Service struct {
 	AuthService
 	UserService
 	TaskService
+	EmailService
 }
 
 func NewService(repo repo.Repository, jwtSecret string, poducer kafka.Producer, accessTokenTTL time.Duration) Service {
 	return Service{
-		AuthService: NewAuthService(repo.UserReposetory, repo.RefreshTokenRepository, NewEmailService(poducer), jwtSecret, accessTokenTTL),
-		UserService: NewUserService(repo.UserReposetory),
-		TaskService: NewTaskSrvice(repo.TaskRepository),
+		AuthService:  NewAuthService(repo.UserReposetory, repo.RefreshTokenRepository, *NewEmailService(repo.TaskRepository, poducer), jwtSecret, accessTokenTTL),
+		UserService:  NewUserService(repo.UserReposetory),
+		TaskService:  NewTaskSrvice(repo.TaskRepository),
+		EmailService: NewEmailService(repo.TaskRepository, poducer),
 	}
 }

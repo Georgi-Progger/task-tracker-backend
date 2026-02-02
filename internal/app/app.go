@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -10,15 +11,20 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/Georgi-Progger/task-tracker-backend/internal/config"
 	"github.com/Georgi-Progger/task-tracker-backend/internal/handler"
 	"github.com/Georgi-Progger/task-tracker-backend/internal/repo"
 	"github.com/Georgi-Progger/task-tracker-backend/internal/service"
+	"github.com/Georgi-Progger/task-tracker-common/configurator"
+	"github.com/Georgi-Progger/task-tracker-common/kafka/consumer"
 	"github.com/Georgi-Progger/task-tracker-common/kafka/producer"
 	"github.com/Georgi-Progger/task-tracker-common/logger"
 	"github.com/Georgi-Progger/task-tracker-common/postgres"
 	"github.com/Georgi-Progger/task-tracker-common/redis"
 	"github.com/Georgi-Progger/task-tracker-rate-limiter/limiter"
+	"github.com/Georgi-Progger/task-tracker-scheduler/pkg/pb/scheduler"
+
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -39,7 +45,7 @@ func Run() {
 
 	logger := logger.NewLogger()
 
-	cfg, err := config.LoadConfig()
+	cfg, err := configurator.LoadConfig()
 	if err != nil {
 		logger.Error(err, "Failed to load config")
 		os.Exit(1)
@@ -65,11 +71,30 @@ func Run() {
 	jwtSecret := os.Getenv("JWT_SECRET")
 
 	producer := producer.NewProducer(cfg.GetUrlBroker(), "EMAIL_SENDING_TASKS", logger) // TODO: FIX THIS SHIT
+	defer producer.Close()
+	consumer := consumer.NewConsumer(cfg.GetUrlBroker(), "EVENTS_NOTIFICATIONS", logger) // TODO: FIX THIS SHIT
+	defer consumer.Close()
 
 	repo := repo.NewRepository(db)
-	service := service.NewService(repo, jwtSecret, &producer, 15*time.Minute)
+	service := service.NewService(repo, jwtSecret, producer, 60*time.Minute)
 	handler := handler.NewHandler(service, *rateLimiter, logger)
 	handler.SetupRoutes(e)
+
+	go consumer.Start(context.Background(), func(ctx context.Context, msg []byte) error {
+		var data map[string]interface{}
+
+		if err := json.Unmarshal(msg, &data); err != nil {
+			logger.Error(err, "Error parsing JSON")
+		}
+
+		if _, ok := data["event_type"]; ok {
+			service.SendTaskCountMessage(ctx)
+		}
+
+		return nil
+	})
+
+	go registerDailySchedulerJob(&logger)
 
 	server := &http.Server{
 		Addr:              fmt.Sprintf(":%s", cfg.GetPort()),
@@ -100,4 +125,35 @@ func Run() {
 	}
 
 	logger.Info("Server is ended")
+}
+
+func registerDailySchedulerJob(logger *logger.Logger) {
+	conn, err := grpc.NewClient(
+		"scheduler:8082",
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+	)
+
+	if err != nil {
+		logger.Error(err, "scheduler grpc dial failed")
+		return
+	}
+
+	client := scheduler.NewSchedulerSServiceClient(conn)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	_, err = client.CreateJob(ctx,
+		&scheduler.CreateJobRequest{
+			Hour:   0,
+			Minute: 0,
+		},
+	)
+
+	if err != nil {
+		logger.Error(err, "scheduler job creation failed")
+		return
+	}
+
+	logger.Info("daily scheduler job registered")
 }
