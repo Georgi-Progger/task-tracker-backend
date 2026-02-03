@@ -42,7 +42,7 @@ func (a *authService) Register(ctx context.Context, user entity.User) (string, e
 	}
 
 	if !errors.Is(err, sql.ErrNoRows) {
-		return "", fmt.Errorf("user is register")
+		return "", domain.ErrEmailInUse
 	}
 
 	hashPassword, err := hash.HashPassword(user.Password)
