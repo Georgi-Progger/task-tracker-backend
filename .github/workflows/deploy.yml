@@ -1,0 +1,26 @@
+name: Deploy
+on: [push]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Login to Docker Hub
+        run: docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and push
+        run: |
+          docker build -t georhugaev/task-tracker-backend:latest -f Dockerfile.app .
+          docker push georhugaev/task-tracker-backend:latest
+      - name: Deploy
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          password: ${{ secrets.PASSWORD }}
+          script: |
+            cd /home/appuser/task-tracker
+            docker-compose pull
+            docker-compose down
+            docker-compose up -d
