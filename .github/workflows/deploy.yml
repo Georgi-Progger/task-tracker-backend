@@ -8,12 +8,13 @@ jobs:
 
       - name: Login to Docker Hub
         run: docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
+
       - name: Go to project root
-      run: |
-        echo "Before: $(pwd)"
-        cd ${{ github.workspace }}
-        echo "After: $(pwd)"
-        ls -la Dockerfile
+        run: |
+          echo "Before: $(pwd)"
+          cd ${{ github.workspace }}
+          echo "After: $(pwd)"
+          ls -la Dockerfile
 
       - name: Build and push
         run: |
