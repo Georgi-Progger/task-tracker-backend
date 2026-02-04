@@ -7,7 +7,6 @@ jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     steps:
-      # 1. Получаем код
       - name: Checkout code
         uses: actions/checkout@v4
 
@@ -39,6 +38,7 @@ jobs:
           password: ${{ secrets.PASSWORD }}  
           script: |
             cd /home/appuser/task-tracker
-            docker-compose pull app
-            docker-compose up -d app
+            docker-compose down
+            docker-compose pull
+            docker-compose up -d
             docker system prune -f
