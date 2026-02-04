@@ -40,5 +40,4 @@ jobs:
             cd /home/appuser/task-tracker
             docker-compose down
             docker-compose pull
-            docker-compose up -d
-            docker system prune -f
+            docker-compose up -d --remove-orphans
