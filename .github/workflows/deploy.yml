@@ -10,6 +10,7 @@ jobs:
         run: docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Build and push
+        working-directory: ${{ github.workspace }}
         run: |
           docker build -t georhugaev/task-tracker-backend:latest .
           docker push georhugaev/task-tracker-backend:latest
