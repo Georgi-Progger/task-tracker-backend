@@ -11,7 +11,7 @@ jobs:
 
       - name: Build and push
         run: |
-          docker build -t georhugaev/task-tracker-backend:latest -f Dockerfile.app .
+          docker build -t georhugaev/task-tracker-backend:latest -f Dockerfile .
           docker push georhugaev/task-tracker-backend:latest
       - name: Deploy
         uses: appleboy/ssh-action@v0.1.7
